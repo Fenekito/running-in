@@ -1,5 +1,5 @@
 // Type definitions for running-in
-// Project: https://github.com/your-username/running-in
+// Project: https://github.com/Fenekito/running-in
 // Definitions by: Juan Claudio Caires Pereira <https://github.com/Fenekito>
 
 declare module 'running-in' {
