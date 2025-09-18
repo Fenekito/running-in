@@ -23,7 +23,7 @@ npm install running-in
 Import the `is` object and use its boolean properties to check the current environment.
 
 ```javascript
-import is from 'is-what';
+import is from '@fenekito/running-in';
 
 if (is.node) {
   console.log('Running in a Node.js environment.');

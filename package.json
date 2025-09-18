@@ -1,6 +1,6 @@
 {
   "name": "@fenekito/running-in",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A tiny, zero-dependency utility for environment detection in JavaScript.",
   "keywords": [
     "environment",
