@@ -1,0 +1,42 @@
+{
+  "name": "@fenekito/running-in",
+  "version": "1.0.0",
+  "description": "A tiny, zero-dependency utility for environment detection in JavaScript.",
+  "keywords": [
+    "environment",
+    "detection",
+    "running",
+    "in",
+    "env",
+    "browser",
+    "node",
+    "server",
+    "client",
+    "production",
+    "development",
+    "ci",
+    "test"
+  ],
+  "homepage": "https://github.com/Fenekito/running-in#readme",
+  "bugs": {
+    "url": "https://github.com/Fenekito/running-in/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fenekito/running-in.git"
+  },
+  "funding": {
+    "url": "paypal.com/donate/?hosted_button_id=X28RH2CTVPMF6"
+  },
+  "license": "MIT",
+  "author": "Juan Claudio Caires Pereira <juanccaires@gmail.com>",
+  "type": "commonjs",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
