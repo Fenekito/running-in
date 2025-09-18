@@ -4,6 +4,8 @@
 .DS_Store
 .git
 .gitignore
+.github/
+.github/workflows/
 node_modules/
 npm-debug.log*
 yarn-debug.log*
