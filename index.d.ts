@@ -6,7 +6,7 @@ declare module 'running-in' {
     /**
      * A utility for detecting the current JavaScript environment.
      */
-    const is: {
+    const runningIn: {
         /**
          * Checks if the code is running in a browser environment.
          */
@@ -33,6 +33,36 @@ declare module 'running-in' {
         readonly module: boolean;
 
         /**
+         * Checks if the code is running as CommonJS (CJS).
+         */
+        readonly commonjs: boolean;
+
+        /**
+         * Checks if the code is running in a Bun environment.
+         */
+        readonly bun: boolean;
+
+        /**
+         * Checks if the code is running in an iframe (browser only).
+         */
+        readonly iframe: boolean;
+
+        /**
+         * Checks if the code is running in a service worker.
+         */
+        readonly serviceWorker: boolean;
+
+        /**
+         * Checks if running in a containerized environment (Docker, etc).
+         */
+        readonly containerized: boolean;
+
+        /**
+         * Checks if debug mode is enabled via environment variables.
+         */
+        readonly debug: boolean;
+
+        /**
          * Checks if the environment is set to production.
          * Relies on `process.env.NODE_ENV`.
          */
@@ -56,37 +86,27 @@ declare module 'running-in' {
         readonly ci: boolean;
 
         /**
-         * Checks if running in GitHub Actions.
+         * Checks if the code is running in GitHub Actions.
          */
         readonly githubActions: boolean;
 
         /**
-         * Checks if running in Vercel.
+         * Checks if the code is running in Vercel.
          */
         readonly vercel: boolean;
 
         /**
-         * Checks if running in Netlify.
+         * Checks if the code is running in Netlify.
          */
         readonly netlify: boolean;
 
         /**
-         * Checks if running in GitLab CI.
+         * Checks if the code is running in GitLab CI.
          */
         readonly gitlab: boolean;
 
         /**
-         * Checks if running in Travis CI.
-         */
-        readonly travis: boolean;
-
-        /**
-         * Checks if running in Jenkins.
-         */
-        readonly jenkins: boolean;
-
-        /**
-         * Checks if running in CircleCI.
+         * Checks if the code is running in CircleCI.
          */
         readonly circleCI: boolean;
 
@@ -111,15 +131,51 @@ declare module 'running-in' {
         readonly edge: boolean;
 
         /**
-         * Checks if the device is a mobile device.
+         * Checks if the device is running in a mobile device.
          */
         readonly mobile: boolean;
 
         /**
-         * Checks if the device is a tablet.
+         * Checks if the device is running in a tablet.
          */
         readonly tablet: boolean;
+
+        /**
+         * Checks if WebSocket is supported (browser only).
+         */
+        webSocket(): boolean;
+
+        /**
+         * Gets detailed information about the current environment.
+         * @returns An object containing detailed environment information including OS, browser, device, and capabilities.
+         */
+        getInfo(): {
+            environment: { type?: string };
+            os: { name?: string; version?: string; platform?: string; arch?: string; hostname?: string; cpus?: number; totalMemory?: number; freeMemory?: number };
+            browser: { name?: string; version?: string; engine?: string };
+            device: { type?: string; vendor?: string; model?: string };
+            capabilities: { touch?: boolean; webgl?: boolean; serviceWorker?: boolean; webRTC?: boolean; webAssembly?: boolean; localStorage?: boolean; sessionStorage?: boolean; indexedDB?: boolean; geolocation?: boolean; notifications?: boolean };
+            runtime: { name?: string; version?: string };
+        };
+
+        /**
+         * Extracts detailed information from an HTTP request object.
+         * @param req - The HTTP request object (Node.js req or browser Request)
+         * @returns An object containing extracted request information.
+         */
+        getRequestInfo(req: any): {
+            url?: { full?: string; pathname?: string; search?: string; hash?: string; protocol?: string };
+            headers?: { [key: string]: any; userAgent?: string; host?: string; contentType?: string; origin?: string; referer?: string };
+            method?: string;
+            protocol?: string;
+            client?: { ip?: string; port?: string; family?: string; type?: string };
+            query?: { [key: string]: any };
+            body?: { size?: number; type?: string; keys?: string[] };
+            isSecure?: boolean;
+            isXmlHttpRequest?: boolean;
+            error?: string;
+        };
     };
 
-    export default is;
+    export default runningIn;
 }
