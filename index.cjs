@@ -1,92 +1,69 @@
+"use strict";
+
 /**
  * A utility for detecting the current JavaScript environment.
  * @namespace runningIn
  */
-const globalProcess = typeof process !== "undefined" ? process : undefined;
-const globalSelf = typeof self !== "undefined" ? self : undefined;
-
-const isBrowser =
-  typeof window !== "undefined" && typeof window.document !== "undefined";
-const isNode =
-  typeof globalProcess !== "undefined" &&
-  globalProcess.versions != null &&
-  globalProcess.versions.node != null;
-const isWebWorker =
-  typeof globalSelf === "object" &&
-  globalSelf?.constructor?.name === "DedicatedWorkerGlobalScope";
-const isDeno =
-  typeof Deno !== "undefined" && typeof Deno.version !== "undefined";
-const isBun = typeof Bun !== "undefined" && typeof Bun.version !== "undefined";
-
-const isModule = (() => {
-  try {
-    // Throws in CJS contexts, but not in ESM runtimes.
-    return new Function("import.meta")(), true;
-  } catch {
-    return false;
-  }
-})();
-
-let nodeFs;
-let nodeOs;
-
-if (isNode) {
-  try {
-    nodeFs = await import("node:fs");
-  } catch {
-    nodeFs = null;
-  }
-
-  try {
-    nodeOs = await import("node:os");
-  } catch {
-    nodeOs = null;
-  }
-}
-
 const runningIn = Object.create(null);
 
 /**
  * Checks if the code is running in a browser environment.
  * @returns {boolean}
  */
-runningIn.browser = isBrowser;
+runningIn.browser =
+  typeof window !== "undefined" && typeof window.document !== "undefined";
 
 /**
  * Checks if the code is running in a Node.js environment.
  * @returns {boolean}
  */
-runningIn.node = isNode;
+runningIn.node =
+  typeof process !== "undefined" &&
+  process.versions != null &&
+  process.versions.node != null;
 
 /**
  * Checks if the code is running in a web worker.
  * @returns {boolean}
  */
-runningIn.webWorker = isWebWorker;
+runningIn.webWorker =
+  typeof self === "object" &&
+  self.constructor &&
+  self.constructor.name === "DedicatedWorkerGlobalScope";
 
 /**
  * Checks if the code is running in a Deno environment.
  * @returns {boolean}
  */
-runningIn.deno = isDeno;
+runningIn.deno =
+  typeof Deno !== "undefined" && typeof Deno.version !== "undefined";
 
 /**
  * Checks if the code is running as a module (ESM).
  * @returns {boolean}
  */
-runningIn.module = isModule;
+runningIn.module = (() => {
+  try {
+    // This will throw an error in a CJS context but not in an ESM context.
+    // It's a bit of a hack, but it's a common way to detect ESM.
+    return new Function("import.meta")(), true;
+  } catch (e) {
+    return false;
+  }
+})();
 
 /**
  * Checks if the code is running as CommonJS (CJS).
  * @returns {boolean}
  */
-runningIn.commonjs = isNode && !isModule;
+runningIn.commonjs = runningIn.node && !runningIn.module;
 
 /**
  * Checks if the code is running in a Bun environment.
  * @returns {boolean}
  */
-runningIn.bun = isBun;
+runningIn.bun =
+  typeof Bun !== "undefined" && typeof Bun.version !== "undefined";
 
 /**
  * Checks if the code is running in an iframe (browser only).
@@ -94,8 +71,8 @@ runningIn.bun = isBun;
  */
 runningIn.iframe = (() => {
   try {
-    return isBrowser && window.self !== window.top;
-  } catch {
+    return runningIn.browser && window.self !== window.top;
+  } catch (e) {
     return false;
   }
 })();
@@ -107,11 +84,11 @@ runningIn.iframe = (() => {
 runningIn.serviceWorker = (() => {
   try {
     return (
-      typeof globalSelf !== "undefined" &&
-      typeof globalSelf.importScripts === "function" &&
+      typeof self !== "undefined" &&
+      typeof self.importScripts === "function" &&
       typeof ServiceWorkerGlobalScope !== "undefined"
     );
-  } catch {
+  } catch (e) {
     return false;
   }
 })();
@@ -121,12 +98,13 @@ runningIn.serviceWorker = (() => {
  * @returns {boolean}
  */
 runningIn.containerized = (() => {
-  if (!isNode || !nodeFs) return false;
+  if (!runningIn.node) return false;
   try {
+    const fs = require("fs");
     return (
-      nodeFs.existsSync("/.dockerenv") ||
-      (nodeFs.existsSync("/proc/self/cgroup") &&
-        nodeFs.readFileSync("/proc/self/cgroup", "utf8").includes("docker"))
+      fs.existsSync("/.dockerenv") ||
+      (fs.existsSync("/proc/self/cgroup") &&
+        fs.readFileSync("/proc/self/cgroup", "utf8").includes("docker"))
     );
   } catch {
     return false;
@@ -138,7 +116,7 @@ runningIn.containerized = (() => {
  * @returns {boolean}
  */
 runningIn.debug =
-  isNode && !!(globalProcess?.env?.DEBUG || globalProcess?.env?.DEBUG_MODE);
+  runningIn.node && !!(process.env.DEBUG || process.env.DEBUG_MODE);
 
 // --- Build/Mode Detection ---
 
@@ -147,7 +125,7 @@ runningIn.debug =
  * Relies on `process.env.NODE_ENV`.
  * @returns {boolean}
  */
-runningIn.production = isNode && globalProcess?.env?.NODE_ENV === "production";
+runningIn.production = runningIn.node && process.env.NODE_ENV === "production";
 
 /**
  * Checks if the environment is set to development.
@@ -155,29 +133,28 @@ runningIn.production = isNode && globalProcess?.env?.NODE_ENV === "production";
  * @returns {boolean}
  */
 runningIn.development =
-  isNode &&
-  (globalProcess?.env?.NODE_ENV === "development" ||
-    globalProcess?.env?.NODE_ENV === undefined);
+  runningIn.node &&
+  (process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === undefined);
 
 /**
  * Checks if the environment is set to test.
  * Relies on `process.env.NODE_ENV`.
  * @returns {boolean}
  */
-runningIn.test = isNode && globalProcess?.env?.NODE_ENV === "test";
+runningIn.test = runningIn.node && process.env.NODE_ENV === "test";
 
 const envCheck = (key, value = "true") =>
-  isNode && globalProcess?.env?.[key] === value;
+  runningIn.node && process.env[key] === value;
 
 /**
  * Checks if the code is running in any known CI/CD environment.
  * @returns {boolean}
  */
 runningIn.ci = !!(
-  (isNode &&
-    (globalProcess?.env?.CI || globalProcess?.env?.CONTINUOUS_INTEGRATION)) ||
-  globalProcess?.env?.BUILD_NUMBER ||
-  globalProcess?.env?.RUN_ID
+  (runningIn.node && (process.env.CI || process.env.CONTINUOUS_INTEGRATION)) ||
+  process.env.BUILD_NUMBER ||
+  process.env.RUN_ID
 );
 
 /**
@@ -211,9 +188,7 @@ runningIn.gitlab = envCheck("GITLAB_CI");
 runningIn.circleCI = envCheck("CIRCLECI");
 
 const uaCheck = (pattern) =>
-  isBrowser &&
-  typeof navigator !== "undefined" &&
-  pattern.test(navigator.userAgent);
+  runningIn.browser && pattern.test(navigator.userAgent);
 
 /**
  * Checks if the browser is Chrome.
@@ -257,7 +232,7 @@ runningIn.tablet = uaCheck(/Tablet/i);
  */
 runningIn.webSocket = () => {
   try {
-    return isBrowser && typeof WebSocket !== "undefined";
+    return runningIn.browser && typeof WebSocket !== "undefined";
   } catch {
     return false;
   }
@@ -279,29 +254,26 @@ runningIn.getInfo = function () {
 
   const matchVersion = (str, regex) => (str.match(regex) || [])[1] || "unknown";
 
-  if (isNode) {
+  if (runningIn.node) {
+    const os = require("os");
     info.environment.type = "node";
     info.runtime.name = "Node.js";
-    info.runtime.version = globalProcess?.versions?.node;
-
-    if (nodeOs) {
-      info.os.name = nodeOs.type();
-      info.os.version = nodeOs.release();
-      info.os.platform = globalProcess?.platform;
-      info.os.arch = globalProcess?.arch;
-      info.os.hostname = nodeOs.hostname();
-      info.os.cpus = nodeOs.cpus().length;
-      info.os.totalMemory = nodeOs.totalmem();
-      info.os.freeMemory = nodeOs.freemem();
-    }
-
+    info.runtime.version = process.versions.node;
+    info.os.name = os.type();
+    info.os.version = os.release();
+    info.os.platform = process.platform;
+    info.os.arch = process.arch;
+    info.os.hostname = os.hostname();
+    info.os.cpus = os.cpus().length;
+    info.os.totalMemory = os.totalmem();
+    info.os.freeMemory = os.freemem();
     info.capabilities.touch =
       info.capabilities.webgl =
       info.capabilities.serviceWorker =
         false;
     info.device.type = "server";
     info.device.vendor = info.device.model = "unknown";
-  } else if (isBrowser && typeof navigator !== "undefined") {
+  } else if (runningIn.browser) {
     const ua = navigator.userAgent;
     const platform = navigator.platform || "";
 
@@ -413,7 +385,7 @@ runningIn.getInfo = function () {
     info.capabilities.indexedDB = "indexedDB" in window;
     info.capabilities.geolocation = "geolocation" in navigator;
     info.capabilities.notifications = "Notification" in window;
-  } else if (isDeno) {
+  } else if (runningIn.deno) {
     info.environment.type = "deno";
     info.runtime.name = "Deno";
     info.runtime.version = Deno.version.deno;
@@ -458,8 +430,10 @@ runningIn.getRequestInfo = function (req) {
 
     // Extract URL information
     if (req.url) {
-      const base = `http://${req.headers?.host || "localhost"}`;
-      const urlObj = new URL(req.url, base);
+      const urlObj = new (runningIn.node ? require("url").URL : URL)(
+        req.url,
+        `http://${req.headers?.host || "localhost"}`
+      );
       info.url.full = req.url;
       info.url.pathname = urlObj.pathname;
       info.url.search = urlObj.search;
@@ -490,17 +464,19 @@ runningIn.getRequestInfo = function (req) {
     }
 
     // Extract client information
-    if (isNode) {
+    if (runningIn.node) {
+      // Node.js request object
       info.client.ip =
         req.ip ||
-        req.headers?.["x-forwarded-for"] ||
+        req.headers["x-forwarded-for"] ||
         req.connection?.remoteAddress ||
         "";
       info.client.port = req.connection?.remotePort || "";
       info.client.family = req.connection?.remoteFamily || "";
-    } else if (isBrowser) {
+    } else if (runningIn.browser) {
+      // Browser Request object
       info.client.type = "browser";
-      info.client.ip = "N/A";
+      info.client.ip = "N/A"; // Not available in browser for security reasons
     }
 
     // Extract body information if available
@@ -529,5 +505,4 @@ runningIn.getRequestInfo = function (req) {
 // Freeze the object to prevent modification
 Object.freeze(runningIn);
 
-export { runningIn };
-export default runningIn;
+module.exports = runningIn;
